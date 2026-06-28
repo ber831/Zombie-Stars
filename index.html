@@ -1,0 +1,525 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brawl Zombies - Survival</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Lilita+One&display=swap');
+
+        :root {
+            --bs-yellow: #f1c40f;
+            --bs-blue: #3498db;
+            --bs-red: #e74c3c;
+            --bs-green: #2ecc71;
+            --bs-dark: #2c3e50;
+            --bs-bg: #1e272e;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bs-bg);
+            color: white;
+            font-family: 'Lilita One', cursive; /* Fonte estilo Brawl Stars */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            user-select: none;
+        }
+
+        /* --- LOBBY BRAWL STARS STYLE --- */
+        #lobby {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #34495e 0%, #1a252f 100%);
+            z-index: 10;
+            position: absolute;
+        }
+
+        .titulo-jogo {
+            font-size: 60px;
+            color: var(--bs-yellow);
+            text-shadow: 4px 4px 0px #000;
+            margin-bottom: 50px;
+            letter-spacing: 2px;
+        }
+
+        /* Botão Jogar Principal */
+        #btn-jogar-container {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .btn-jogar {
+            background-color: var(--bs-yellow);
+            color: var(--bs-dark);
+            border: 4px solid #000;
+            border-radius: 15px;
+            padding: 20px 60px;
+            font-size: 40px;
+            font-family: 'Lilita One', cursive;
+            cursor: pointer;
+            box-shadow: 0px 8px 0px #d4ac0d, 0px 12px 20px rgba(0,0,0,0.5);
+            transition: all 0.1s;
+        }
+        .btn-jogar:active {
+            transform: translateY(8px);
+            box-shadow: 0px 0px 0px #d4ac0d, 0px 4px 10px rgba(0,0,0,0.5);
+        }
+        .nivel-label {
+            display: block;
+            font-size: 20px;
+            color: var(--bs-dark);
+            margin-top: 5px;
+        }
+
+        /* Botões Laterais */
+        .botoes-secundarios {
+            display: flex;
+            gap: 20px;
+        }
+        .btn-secundario {
+            font-family: 'Lilita One', cursive;
+            border: 3px solid #000;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0px 5px 0px rgba(0,0,0,0.3);
+        }
+        .btn-perfil { background-color: var(--bs-blue); box-shadow: 0px 5px 0px #2980b9; }
+        .btn-melhorias { background-color: var(--bs-green); box-shadow: 0px 5px 0px #27ae60; }
+        .btn-secundario:active { transform: translateY(5px); box-shadow: none; }
+
+        /* --- MODAIS (PERFIL E MELHORIAS) --- */
+        .modal {
+            display: none;
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            width: 100%; height: 100%;
+            z-index: 20;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: var(--bs-dark);
+            border: 4px solid #000;
+            border-radius: 20px;
+            padding: 30px;
+            width: 500px;
+            text-align: center;
+            box-shadow: 0px 10px 30px rgba(0,0,0,0.8);
+        }
+        .modal-content h2 { color: var(--bs-yellow); margin-top: 0; font-size: 36px; text-shadow: 2px 2px 0px #000;}
+        .close-btn {
+            background: var(--bs-red); border: 2px solid #000; color: white;
+            padding: 10px 20px; font-size: 20px; border-radius: 10px; cursor: pointer;
+            margin-top: 20px; font-family: 'Lilita One';
+        }
+        
+        .status-linha { display: flex; justify-content: space-between; font-size: 24px; margin: 15px 0; border-bottom: 2px dashed #555; padding-bottom: 5px;}
+        
+        .upgrade-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #34495e; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 2px solid #000;
+        }
+        .upgrade-btn {
+            background: var(--bs-yellow); border: 2px solid #000; border-radius: 5px;
+            padding: 5px 15px; font-family: 'Lilita One'; font-size: 18px; cursor: pointer;
+        }
+
+        /* --- JOGO --- */
+        #game-container { display: none; position: relative; }
+        canvas { background-color: #5d6d7e; border: 6px solid #000; border-radius: 15px; cursor: crosshair; }
+        
+        #hud {
+            position: absolute; top: 10px; width: 100%; display: flex; justify-content: space-between;
+            padding: 0 20px; box-sizing: border-box; font-size: 24px; text-shadow: 2px 2px 0px #000; pointer-events: none;
+        }
+
+        #tela-fim {
+            display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9); padding: 40px; border-radius: 20px; border: 4px solid var(--bs-yellow);
+            text-align: center; z-index: 30; width: 400px;
+        }
+        #tela-fim h1 { font-size: 40px; margin: 0 0 10px 0; }
+        #moedas-ganhas { color: var(--bs-yellow); font-size: 30px; }
+    </style>
+</head>
+<body>
+
+    <!-- TELA PRINCIPAL (LOBBY) -->
+    <div id="lobby">
+        <div class="titulo-jogo">BRAWL ZOMBIES</div>
+        
+        <div id="btn-jogar-container">
+            <button class="btn-jogar" onclick="iniciarJogo()">
+                JOGAR
+                <span class="nivel-label" id="lbl-nivel-btn">Nível 1</span>
+            </button>
+        </div>
+
+        <div class="botoes-secundarios">
+            <button class="btn-secundario btn-perfil" onclick="abrirModal('modal-perfil')">👤 PERFIL</button>
+            <button class="btn-secundario btn-melhorias" onclick="abrirModal('modal-loja')">🛠️ MELHORIAS</button>
+        </div>
+    </div>
+
+    <!-- MODAL PERFIL -->
+    <div id="modal-perfil" class="modal">
+        <div class="modal-content">
+            <h2>SEU PERFIL</h2>
+            <div class="status-linha"><span>Nome:</span> <span style="color: var(--bs-green)">Sobrevivente</span></div>
+            <div class="status-linha"><span>Troféus 🏆:</span> <span id="ui-trofeus">0</span></div>
+            <div class="status-linha"><span>Partidas Jogadas:</span> <span id="ui-partidas">0</span></div>
+            <div class="status-linha"><span>Nível Atual:</span> <span id="ui-nivel">1</span></div>
+            <div class="status-linha"><span>Moedas 🪙:</span> <span style="color: var(--bs-yellow)" id="ui-moedas">0</span></div>
+            <button class="close-btn" onclick="fecharModal('modal-perfil')">VOLTAR</button>
+        </div>
+    </div>
+
+    <!-- MODAL MELHORIAS -->
+    <div id="modal-loja" class="modal">
+        <div class="modal-content">
+            <h2>MELHORIAS</h2>
+            <div style="font-size:20px; margin-bottom:15px; color:var(--bs-yellow)">Moedas: <span id="ui-moedas-loja">0</span>🪙</div>
+            
+            <div class="upgrade-item">
+                <span>Dano (Nvl <span id="up-nvl-dano">1</span>)</span>
+                <button class="upgrade-btn" onclick="comprarUpgrade('dano')">🪙 <span id="up-preco-dano">50</span></button>
+            </div>
+            <div class="upgrade-item">
+                <span>Vida (Nvl <span id="up-nvl-vida">1</span>)</span>
+                <button class="upgrade-btn" onclick="comprarUpgrade('vida')">🪙 <span id="up-preco-vida">50</span></button>
+            </div>
+            <div class="upgrade-item">
+                <span>Velocidade (Nvl <span id="up-nvl-vel">1</span>)</span>
+                <button class="upgrade-btn" onclick="comprarUpgrade('vel')">🪙 <span id="up-preco-vel">50</span></button>
+            </div>
+            <button class="close-btn" onclick="fecharModal('modal-loja')">VOLTAR</button>
+        </div>
+    </div>
+
+    <!-- TELA DE JOGO -->
+    <div id="game-container">
+        <div id="hud">
+            <div>Vida: <span id="hud-hp" style="color:var(--bs-green)">100</span> | Tiros: <span id="hud-municao" style="color:var(--bs-yellow)">3</span></div>
+            <div>Zumbis: <span id="hud-zumbis" style="color:var(--bs-red)">0/10</span></div>
+            <div>Nível <span id="hud-nivel">1</span></div>
+        </div>
+        <canvas id="gameCanvas" width="1000" height="600"></canvas>
+        
+        <!-- TELA FIM DE PARTIDA -->
+        <div id="tela-fim">
+            <h1 id="fim-titulo">VITÓRIA!</h1>
+            <p id="fim-mensagem">Você sobreviveu à horda.</p>
+            <div id="moedas-ganhas">🪙 +0</div>
+            <div style="color: #3498db; font-size: 24px; margin-top: 10px; font-weight: bold;" id="trofeus-ganhos">🏆 +10</div>
+            <button class="close-btn" onclick="voltarLobby()" style="width: 100%; margin-top: 20px;">IR PARA O LOBBY</button>
+        </div>
+    </div>
+
+    <script>
+        // --- SISTEMA DE PROGRESSÃO E STATUS ---
+// --- CARREGAR IMAGEM DO CHÃO ---
+const tileChao = new Image();
+tileChao.src = 'https://i.ibb.co/CKMFCy0Y/tile-0049.png';
+const tamTile = 32; 
+
+function desenharChao() {
+    for (let x = 0; x < canvas.width; x += tamTile) {
+        for (let y = 0; y < canvas.height; y += tamTile) {
+            ctx.drawImage(tileChao, x, y, tamTile, tamTile);
+        }
+    }
+}
+        let perfil = {
+            trofeus: 0,
+            partidas: 0,
+            moedas: 0,
+            nivelAtual: 1
+        };
+
+        let upgrades = {
+            dano: { nivel: 1, precoBase: 50, valor: 25 }, // Dano base do tiro
+            vida: { nivel: 1, precoBase: 50, valor: 100 }, // HP máximo
+            vel:  { nivel: 1, precoBase: 50, valor: 4 }    // Velocidade do jogador
+        };
+
+        // --- ATUALIZAR INTERFACES ---
+        function atualizarUI() {
+            // Perfil
+            document.getElementById('ui-trofeus').innerText = perfil.trofeus;
+            document.getElementById('ui-partidas').innerText = perfil.partidas;
+            document.getElementById('ui-nivel').innerText = perfil.nivelAtual > 10 ? "MÁX" : perfil.nivelAtual;
+            document.getElementById('ui-moedas').innerText = perfil.moedas;
+            document.getElementById('ui-moedas-loja').innerText = perfil.moedas;
+            
+            // Botão Jogar
+            document.getElementById('lbl-nivel-btn').innerText = perfil.nivelAtual > 10 ? "ZERADO!" : "Nível " + perfil.nivelAtual;
+
+            // Loja
+            document.getElementById('up-nvl-dano').innerText = upgrades.dano.nivel;
+            document.getElementById('up-preco-dano').innerText = upgrades.dano.precoBase * upgrades.dano.nivel;
+            
+            document.getElementById('up-nvl-vida').innerText = upgrades.vida.nivel;
+            document.getElementById('up-preco-vida').innerText = upgrades.vida.precoBase * upgrades.vida.nivel;
+            
+            document.getElementById('up-nvl-vel').innerText = upgrades.vel.nivel;
+            document.getElementById('up-preco-vel').innerText = upgrades.vel.precoBase * upgrades.vel.nivel;
+        }
+
+        // --- SISTEMA DE LOJA ---
+        function comprarUpgrade(tipo) {
+            let upg = upgrades[tipo];
+            let custo = upg.precoBase * upg.nivel;
+            
+            if (perfil.moedas >= custo) {
+                perfil.moedas -= custo;
+                upg.nivel++;
+                if(tipo === 'dano') upg.valor += 10;
+                if(tipo === 'vida') upg.valor += 20;
+                if(tipo === 'vel') upg.valor += 0.5;
+                atualizarUI();
+            } else {
+                alert("Moedas insuficientes!");
+            }
+        }
+
+        // Modais
+        function abrirModal(id) { document.getElementById(id).style.display = 'flex'; atualizarUI(); }
+        function fecharModal(id) { document.getElementById(id).style.display = 'none'; }
+        function voltarLobby() { 
+            document.getElementById('game-container').style.display = 'none'; 
+            document.getElementById('tela-fim').style.display = 'none';
+            document.getElementById('lobby').style.display = 'flex';
+            atualizarUI();
+        }
+
+        // --- SISTEMA DE JOGO ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let loopJogo, spawnerInterval;
+        let jogoRodando = false;
+        
+        let player, tiros, zumbis;
+        const teclas = { w: false, a: false, s: false, d: false };
+
+        // Variáveis de Dificuldade da Partida
+        let zumbisMortos = 0;
+        let zumbisParaMatar = 10;
+        let tempoInicio = 0;
+
+        window.addEventListener('keydown', e => {
+            if(e.key.toLowerCase() === 'w') teclas.w = true;
+            if(e.key.toLowerCase() === 'a') teclas.a = true;
+            if(e.key.toLowerCase() === 's') teclas.s = true;
+            if(e.key.toLowerCase() === 'd') teclas.d = true;
+        });
+        window.addEventListener('keyup', e => {
+            if(e.key.toLowerCase() === 'w') teclas.w = false;
+            if(e.key.toLowerCase() === 'a') teclas.a = false;
+            if(e.key.toLowerCase() === 's') teclas.s = false;
+            if(e.key.toLowerCase() === 'd') teclas.d = false;
+        });
+
+        canvas.addEventListener('mousedown', e => {
+            if (!jogoRodando || player.hp <= 0 || player.municao <= 0) return;
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const angulo = Math.atan2(mouseY - player.y, mouseX - player.x);
+            
+            tiros.push({
+                x: player.x, y: player.y,
+                vx: Math.cos(angulo) * 15, vy: Math.sin(angulo) * 15,
+                raio: 6, cor: '#f1c40f', dano: upgrades.dano.valor
+            });
+            player.municao--;
+            player.ultimoTiro = Date.now();
+        });
+
+        function iniciarJogo() {
+            if(perfil.nivelAtual > 10) {
+                alert("Você já zerou todos os 10 níveis!");
+                return;
+            }
+
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+            
+            // Setup do Player baseado nos Upgrades
+            player = {
+                x: canvas.width / 2, y: canvas.height / 2,
+                raio: 20, cor: '#3498db',
+                velocidade: upgrades.vel.valor,
+                hp: upgrades.vida.valor, maxHp: upgrades.vida.valor,
+                municao: 3, maxMunicao: 3, tempoRecarga: 1000,
+                ultimoTiro: Date.now()
+            };
+
+            tiros = []; zumbis = []; zumbisMortos = 0;
+            perfil.partidas++;
+
+            // Cálculos de Dificuldade Mário-Style (Aumenta com o nível)
+            let n = perfil.nivelAtual;
+            zumbisParaMatar = 10 + (n * 5); // Nv1 = 15, Nv10 = 60
+            let tempoSpawn = Math.max(500, 2000 - (n * 150)); // Nv1 = 1850ms, Nv10 = 500ms
+            
+            document.getElementById('hud-nivel').innerText = n;
+            tempoInicio = Date.now();
+            jogoRodando = true;
+
+            // Spawner de Zumbis
+            clearInterval(spawnerInterval);
+            spawnerInterval = setInterval(() => {
+                if(!jogoRodando) return;
+                let posX = Math.random() < 0.5 ? 0 : canvas.width;
+                let posY = Math.random() * canvas.height;
+                
+                zumbis.push({
+                    x: posX, y: posY, raio: 18, cor: '#2ecc71',
+                    velocidade: 1 + (n * 0.2), // Zumbis mais rápidos
+                    hp: 20 + (n * 5),          // Zumbis mais fortes
+                    dano: 0.5 + (n * 0.1)      // Dano contínuo
+                });
+            }, tempoSpawn);
+
+            atualizarJogo();
+        }
+
+        function atualizarJogo() {
+            if (!jogoRodando) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+desenharChao();
+            let agora = Date.now();
+
+            // Recarga
+            if (player.municao < player.maxMunicao && agora - player.ultimoTiro > player.tempoRecarga) {
+                player.municao++;
+                player.ultimoTiro = agora;
+            }
+
+            // Movimento Jogador
+            if (teclas.w) player.y -= player.velocidade;
+            if (teclas.s) player.y += player.velocidade;
+            if (teclas.a) player.x -= player.velocidade;
+            if (teclas.d) player.x += player.velocidade;
+            
+            player.x = Math.max(player.raio, Math.min(canvas.width - player.raio, player.x));
+            player.y = Math.max(player.raio, Math.min(canvas.height - player.raio, player.y));
+
+            // Tiros
+            for (let i = tiros.length - 1; i >= 0; i--) {
+                let t = tiros[i];
+                t.x += t.vx; t.y += t.vy;
+
+                ctx.beginPath(); ctx.arc(t.x, t.y, t.raio, 0, Math.PI * 2);
+                ctx.fillStyle = t.cor; ctx.fill(); ctx.stroke();
+
+                if (t.x < 0 || t.x > canvas.width || t.y < 0 || t.y > canvas.height) {
+                    tiros.splice(i, 1);
+                }
+            }
+
+            // Zumbis
+            for (let i = zumbis.length - 1; i >= 0; i--) {
+                let z = zumbis[i];
+                let ang = Math.atan2(player.y - z.y, player.x - z.x);
+                z.x += Math.cos(ang) * z.velocidade;
+                z.y += Math.sin(ang) * z.velocidade;
+
+                ctx.beginPath(); ctx.arc(z.x, z.y, z.raio, 0, Math.PI * 2);
+                ctx.fillStyle = z.cor; ctx.fill();
+                ctx.strokeStyle = '#1e272e'; ctx.lineWidth = 3; ctx.stroke();
+
+                // Colisão Tiro vs Zumbi
+                for (let j = tiros.length - 1; j >= 0; j--) {
+                    let t = tiros[j];
+                    if (Math.hypot(t.x - z.x, t.y - z.y) < z.raio + t.raio) {
+                        z.hp -= t.dano;
+                        tiros.splice(j, 1);
+                    }
+                }
+
+                if (z.hp <= 0) {
+                    zumbis.splice(i, 1);
+                    zumbisMortos++;
+                    continue;
+                }
+
+                // Dano no Jogador
+                if (Math.hypot(player.x - z.x, player.y - z.y) < player.raio + z.raio) {
+                    player.hp -= z.dano;
+                }
+            }
+
+            // Desenhar Jogador
+            ctx.beginPath(); ctx.arc(player.x, player.y, player.raio, 0, Math.PI * 2);
+            ctx.fillStyle = player.cor; ctx.fill();
+            ctx.lineWidth = 4; ctx.strokeStyle = '#000'; ctx.stroke();
+
+            // Atualizar HUD
+            document.getElementById('hud-hp').innerText = Math.max(0, Math.floor(player.hp));
+            document.getElementById('hud-municao').innerText = player.municao;
+            document.getElementById('hud-zumbis').innerText = zumbisMortos + "/" + zumbisParaMatar;
+
+            // Condições de Fim de Partida
+            if (player.hp <= 0) {
+                finalizarPartida(false);
+                return;
+            }
+            if (zumbisMortos >= zumbisParaMatar) {
+                finalizarPartida(true);
+                return;
+            }
+
+            loopJogo = requestAnimationFrame(atualizarJogo);
+        }
+
+        function finalizarPartida(venceu) {
+            jogoRodando = false;
+            clearInterval(spawnerInterval);
+            
+            let telaFim = document.getElementById('tela-fim');
+            telaFim.style.display = 'block';
+
+            if (venceu) {
+                document.getElementById('fim-titulo').innerText = "VITÓRIA!";
+                document.getElementById('fim-titulo').style.color = "var(--bs-green)";
+                document.getElementById('fim-mensagem').innerText = "Área limpa com sucesso!";
+                
+                // Cálculo de Moedas: Nível base + Bônus de Tempo
+                let tempoGasto = (Date.now() - tempoInicio) / 1000;
+                let bonusTempo = Math.max(0, 60 - tempoGasto); // Se fechar em menos de 60s, ganha bônus
+                let moedasGanhas = Math.floor((perfil.nivelAtual * 15) + bonusTempo);
+                
+                document.getElementById('moedas-ganhas').innerText = "🪙 +" + moedasGanhas;
+                document.getElementById('trofeus-ganhos').innerText = "🏆 +10";
+                
+                perfil.moedas += moedasGanhas;
+                perfil.trofeus += 10;
+                perfil.nivelAtual++; // Progressão Automática (Mário)
+                
+            } else {
+                document.getElementById('fim-titulo').innerText = "DERROTA!";
+                document.getElementById('fim-titulo').style.color = "var(--bs-red)";
+                document.getElementById('fim-mensagem').innerText = "Os zumbis devoraram você.";
+                document.getElementById('moedas-ganhas').innerText = "🪙 +5 (Prêmio de Consolação)";
+                document.getElementById('trofeus-ganhos').innerText = "🏆 +0";
+                perfil.moedas += 5;
+            }
+        }
+
+        // Iniciar inicializando a UI
+        atualizarUI();
+    </script>
+</body>
+</html>
